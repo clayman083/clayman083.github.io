@@ -1,0 +1,13 @@
+baseURL = "https://clayman083.github.io/"
+languageCode = "en-us"
+title = "Kirill Sumorokov"
+theme = "m10c"
+
+[params]
+author = "Kirill Sumorokov"
+description = "Python backend developer and DevOps enthusiast"
+
+[[params.social]]
+  icon = "github"
+  name = "My Github"
+  url = "https://github.com/clayman083"

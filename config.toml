@@ -7,6 +7,11 @@ theme = "m10c"
 author = "Kirill Sumorokov"
 description = "Python backend developer and DevOps enthusiast"
 
+[[menu.main]]
+  identifier = "cv"
+  name = "CV"
+  url = "/cv/"
+
 [[params.social]]
   icon = "github"
   name = "My Github"

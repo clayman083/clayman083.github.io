@@ -1,350 +1,343 @@
-<!doctype html><html lang=en-us><head><title>Arcitecture // Kirill Sumorokov</title><link rel="shortcut icon" href=/favicon.ico><meta charset=utf-8><meta name=generator content="Hugo 0.83.1"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Sumorokov"><meta name=description content><link rel=stylesheet href=https://tech.clayman.pro/css/main.min.4a7ec8660f9a44b08c4da97c5f2e31b1192df1d4d0322e65c0dbbc6ecb1b863f.css><meta name=twitter:card content="summary"><meta name=twitter:title content="Arcitecture"><meta name=twitter:description content="Архитектура приложения Disclaimer Я занимаюсь коммерческой разработкой веб-приложений и микросервисов уже более 10 лет. За годы обучения в университете было много курсов и предметов различной степени полезности: архитектура и внутренее устройство микропроцессоров, сети, низкоуровневая разработка на assembler, высокоуровневая разработка на С++, проектирование баз данных и работа с СУБД, компьютерная графика и куча других вещей, которые как оказалось в реальной работе не очень пригодились. Из более менее полезного были только паттерны проектирования от банды четырех и самые азы unit-тестирования."><meta property="og:title" content="Arcitecture"><meta property="og:description" content="Архитектура приложения Disclaimer Я занимаюсь коммерческой разработкой веб-приложений и микросервисов уже более 10 лет. За годы обучения в университете было много курсов и предметов различной степени полезности: архитектура и внутренее устройство микропроцессоров, сети, низкоуровневая разработка на assembler, высокоуровневая разработка на С++, проектирование баз данных и работа с СУБД, компьютерная графика и куча других вещей, которые как оказалось в реальной работе не очень пригодились. Из более менее полезного были только паттерны проектирования от банды четырех и самые азы unit-тестирования."><meta property="og:type" content="article"><meta property="og:url" content="https://tech.clayman.pro/posts/architecture/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-05-27T19:47:11+05:00"><meta property="article:modified_time" content="2021-05-27T19:47:11+05:00"></head><body><header class=app-header><a href=https://tech.clayman.pro/><img class=app-header-avatar src=/avatar.jpg alt="Kirill Sumorokov"></a><h1>Kirill Sumorokov</h1><nav class=app-header-menu><a class=app-header-menu-item href=/cv/>CV</a></nav><p>Python backend developer and DevOps enthusiast</p><div class=app-header-social><a href=https://github.com/clayman083 target=_blank rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>My Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a></div></header><main class=app-container><article class=post><header class=post-header><h1 class=post-title>Arcitecture</h1><div class=post-meta><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>May 27, 2021</div><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>9 min read</div></div></header><div class=post-content><h1 id=архитектура-приложения>Архитектура приложения</h1><h3 id=disclaimer>Disclaimer</h3><p>Я занимаюсь коммерческой разработкой веб-приложений и микросервисов уже более 10 лет. За годы обучения в университете было много курсов и предметов различной степени полезности: архитектура и внутренее устройство микропроцессоров, сети, низкоуровневая разработка на assembler, высокоуровневая разработка на С++, проектирование баз данных и работа с СУБД, компьютерная графика и куча других вещей, которые как оказалось в реальной работе не очень пригодились. Из более менее полезного были только паттерны проектирования от банды четырех и самые азы unit-тестирования. А вот про то как правильно спроектировать и написать архитектуру приложения, которое легко поддерживать, расширять и тестировать, к сожалению, ничего не было.</p><p>Документация к Django ответов на вопросы не давала, статьи в блогах и записи докладов с конференций только поднимали еще больше вопросов. <a href="https://www.youtube.com/watch?v=Nsjsiz2A9mg">&ldquo;Классический доклад&rdquo;</a> Роберта Мартина по теме поначалу так же не зашел, но стало понятно в какую сторону двигаться. Подход, о котором пойдет речь далее, является некоторой компиляцией идей взятых из Чистой Архитектуры, а также <a href=https://docs.microsoft.com/ru-ru/dotnet/architecture/microservices/architect-microservice-container-applications/>рекомендаций</a> Microsoft по проектированию приложений.</p><h3 id=начало>Начало</h3><p>Как было раньше. У нас было легаси веб-приложение, которое было наспех переписано c PHP на Python под Django со всеми вытекающими последствиями:</p><ul><li>Бизнес-логика размазана между моделями и контроллерами;</li><li>Запросы в БД через ORM прямо из Django-шаблонов;</li><li>Бесконечные методы на несколько сотен строк, которые занимаются всем на свете: от получения и изменения данных в бд до отправки писем и отрисовки html страниц;</li><li>Полное отсутствие автоматических тестов, потому что во-первых их сложно написать в такой ситуации и они будут выполняться вечность, во-вторых нет времени, ведь бизнесу нужны новые фичи и дедлайном на вчера.</li></ul><p>Со временем сложность и стоимость внеднения новой функциональности начала зашкаливать. Одни и те же баги, которые вроде были исправлены в прошлом месяце, начали всплывать снова и снова. Стало понятно что нужно что-то менять.</p><p>Методом проб и ошибок получилось прийти к следующей архитектуре. Как и в чистой архитектуре, приложение разделено на слои, каждый из которых отвечает за свою конкретную часть:</p><ul><li>Слой бизнес логики</li><li>Слой доступа к данным</li><li>Слой взаимодействия с внешними сервисами</li><li>Слой внешнего интерфейса самого приложения</li></ul><p>Далее пойдет описание каждого из них.</p><h3 id=бизнес-логика>Бизнес логика</h3><p>В данном слое мы описываем все бизнес-сущности, с которыми работает наше приложение, а так же всю бизнес-логику. Тут же описываются все интерфейсы/протоколы для взаимодействия с другими слоями. Важно заметить что объекты в этом слое ничего не знают о хранилище и сами в БД для получения или обновления не ходят. На данном уровне мы только описываем интерфейс взаимодействия с хранилищем, конкретная реализация же будет находится в слое доступа к данным.</p><h4 id=entity>Entity</h4><p>Entity - объекты бизнес-сущности. Максимально простые, содержат в себе только описание полей и какие то базовые правила бизнес-логики. В python для них удобно использовать объекты из библиотеки <a href=https://www.attrs.org/en/stable/>attrs</a> или новые <a href=https://docs.python.org/3/library/dataclasses.html>dataclasses</a>, которые появилиьсь в python 3.7.</p><pre><code>    from dataclasses import dataclass, field
-    from typing import Optional
+<!doctype html><html lang=en-us><head><title>Arcitecture // Kirill Sumorokov</title><link rel="shortcut icon" href=/favicon.ico><meta charset=utf-8><meta name=generator content="Hugo 0.83.1"><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Sumorokov"><meta name=description content><link rel=stylesheet href=https://tech.clayman.pro/css/main.min.4a7ec8660f9a44b08c4da97c5f2e31b1192df1d4d0322e65c0dbbc6ecb1b863f.css><meta name=twitter:card content="summary"><meta name=twitter:title content="Arcitecture"><meta name=twitter:description content="Архитектура приложения Disclaimer Я занимаюсь коммерческой разработкой веб-приложений и микросервисов уже более 10 лет. За годы обучения в университете было много курсов и предметов различной степени полезности: архитектура и внутренее устройство микропроцессоров, сети, низкоуровневая разработка на assembler, высокоуровневая разработка на С++, проектирование баз данных и работа с СУБД, компьютерная графика и куча других вещей, которые как оказалось в реальной работе не очень пригодились. Из более менее полезного были только паттерны проектирования от банды четырех и самые азы unit-тестирования."><meta property="og:title" content="Arcitecture"><meta property="og:description" content="Архитектура приложения Disclaimer Я занимаюсь коммерческой разработкой веб-приложений и микросервисов уже более 10 лет. За годы обучения в университете было много курсов и предметов различной степени полезности: архитектура и внутренее устройство микропроцессоров, сети, низкоуровневая разработка на assembler, высокоуровневая разработка на С++, проектирование баз данных и работа с СУБД, компьютерная графика и куча других вещей, которые как оказалось в реальной работе не очень пригодились. Из более менее полезного были только паттерны проектирования от банды четырех и самые азы unit-тестирования."><meta property="og:type" content="article"><meta property="og:url" content="https://tech.clayman.pro/posts/architecture/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-05-27T19:47:11+05:00"><meta property="article:modified_time" content="2021-05-27T19:47:11+05:00"></head><body><header class=app-header><a href=https://tech.clayman.pro/><img class=app-header-avatar src=/avatar.jpg alt="Kirill Sumorokov"></a><h1>Kirill Sumorokov</h1><nav class=app-header-menu><a class=app-header-menu-item href=/cv/>CV</a></nav><p>Python backend developer and DevOps enthusiast</p><div class=app-header-social><a href=https://github.com/clayman083 target=_blank rel="noreferrer noopener"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-github"><title>My Github</title><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37.0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44.0 0020 4.77 5.07 5.07.0 0019.91 1S18.73.65 16 2.48a13.38 13.38.0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07.0 005 4.77 5.44 5.44.0 003.5 8.55c0 5.42 3.3 6.61 6.44 7A3.37 3.37.0 009 18.13V22"/></svg></a></div></header><main class=app-container><article class=post><header class=post-header><h1 class=post-title>Arcitecture</h1><div class=post-meta><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar"><title>calendar</title><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>May 27, 2021</div><div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock"><title>clock</title><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>9 min read</div></div></header><div class=post-content><h1 id=архитектура-приложения>Архитектура приложения</h1><h3 id=disclaimer>Disclaimer</h3><p>Я занимаюсь коммерческой разработкой веб-приложений и микросервисов уже более 10 лет. За годы обучения в университете было много курсов и предметов различной степени полезности: архитектура и внутренее устройство микропроцессоров, сети, низкоуровневая разработка на assembler, высокоуровневая разработка на С++, проектирование баз данных и работа с СУБД, компьютерная графика и куча других вещей, которые как оказалось в реальной работе не очень пригодились. Из более менее полезного были только паттерны проектирования от банды четырех и самые азы unit-тестирования. А вот про то как правильно спроектировать и написать архитектуру приложения, которое легко поддерживать, расширять и тестировать, к сожалению, ничего не было.</p><p>Документация к Django ответов на вопросы не давала, статьи в блогах и записи докладов с конференций только поднимали еще больше вопросов. <a href="https://www.youtube.com/watch?v=Nsjsiz2A9mg">&ldquo;Классический доклад&rdquo;</a> Роберта Мартина по теме поначалу так же не зашел, но стало понятно в какую сторону двигаться. Подход, о котором пойдет речь далее, является некоторой компиляцией идей взятых из Чистой Архитектуры, а также <a href=https://docs.microsoft.com/ru-ru/dotnet/architecture/microservices/architect-microservice-container-applications/>рекомендаций</a> Microsoft по проектированию приложений.</p><h3 id=начало>Начало</h3><p>Как было раньше. У нас было легаси веб-приложение, которое было наспех переписано c PHP на Python под Django со всеми вытекающими последствиями:</p><ul><li>Бизнес-логика размазана между моделями и контроллерами;</li><li>Запросы в БД через ORM прямо из Django-шаблонов;</li><li>Бесконечные методы на несколько сотен строк, которые занимаются всем на свете: от получения и изменения данных в бд до отправки писем и отрисовки html страниц;</li><li>Полное отсутствие автоматических тестов, потому что во-первых их сложно написать в такой ситуации и они будут выполняться вечность, во-вторых нет времени, ведь бизнесу нужны новые фичи и дедлайном на вчера.</li></ul><p>Со временем сложность и стоимость внеднения новой функциональности начала зашкаливать. Одни и те же баги, которые вроде были исправлены в прошлом месяце, начали всплывать снова и снова. Стало понятно что нужно что-то менять.</p><p>Методом проб и ошибок получилось прийти к следующей архитектуре. Как и в чистой архитектуре, приложение разделено на слои, каждый из которых отвечает за свою конкретную часть:</p><ul><li>Слой бизнес логики</li><li>Слой доступа к данным</li><li>Слой взаимодействия с внешними сервисами</li><li>Слой внешнего интерфейса самого приложения</li></ul><p>Далее пойдет описание каждого из них.</p><h3 id=бизнес-логика>Бизнес логика</h3><p>В данном слое мы описываем все бизнес-сущности, с которыми работает наше приложение, а так же всю бизнес-логику. Тут же описываются все интерфейсы/протоколы для взаимодействия с другими слоями. Важно заметить что объекты в этом слое ничего не знают о хранилище и сами в БД для получения или обновления не ходят. На данном уровне мы только описываем интерфейс взаимодействия с хранилищем, конкретная реализация же будет находится в слое доступа к данным.</p><h4 id=entity>Entity</h4><p>Entity - объекты бизнес-сущности. Максимально простые, содержат в себе только описание полей и какие то базовые правила бизнес-логики. В python для них удобно использовать объекты из библиотеки <a href=https://www.attrs.org/en/stable/>attrs</a> или новые <a href=https://docs.python.org/3/library/dataclasses.html>dataclasses</a>, которые появилиьсь в python 3.7.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python3 data-lang=python3>    <span style=color:#f92672>from</span> dataclasses <span style=color:#66d9ef>import</span> dataclass, field
+    <span style=color:#f92672>from</span> typing <span style=color:#66d9ef>import</span> Optional
 
-    from passlib.handlers.pbkdf2 import pbkdf2_sha512  # type: ignore
+    <span style=color:#f92672>from</span> passlib.handlers.pbkdf2 <span style=color:#66d9ef>import</span> pbkdf2_sha512  <span style=color:#75715e># type: ignore</span>
 
 
-    @dataclass
-    class Entity:
-        &quot;&quot;&quot; Базовый класс для всех бизнес-сущностей.&quot;&quot;&quot;
+    <span style=color:#a6e22e>@dataclass</span>
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Entity</span>:
+        <span style=color:#e6db74>&#34;&#34;&#34; Базовый класс для всех бизнес-сущностей.&#34;&#34;&#34;</span>
         key: int
 
 
-    @dataclass
-    class Permission(Entity):
+    <span style=color:#a6e22e>@dataclass</span>
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Permission</span>(Entity):
         name: str
 
 
-    @dataclass
-    class User(Entity):
-        &quot;&quot;&quot;Бизнес-сущность пользователя.&quot;&quot;&quot;
+    <span style=color:#a6e22e>@dataclass</span>
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>User</span>(Entity):
+        <span style=color:#e6db74>&#34;&#34;&#34;Бизнес-сущность пользователя.&#34;&#34;&#34;</span>
 
         email: str
-        password: Optional[str] = None
-        is_superuser: bool = False
-        permissions: list[Permission] = field(default_factory=list)
+        password: Optional[str] <span style=color:#f92672>=</span> <span style=color:#66d9ef>None</span>
+        is_superuser: bool <span style=color:#f92672>=</span> <span style=color:#66d9ef>False</span>
+        permissions: list[Permission] <span style=color:#f92672>=</span> field(default_factory<span style=color:#f92672>=</span>list)
 
-        def change_password(self, password: str) -&gt; None:
-            self.password = pbkdf2_sha512.encrypt(
-                password, rounds=10000, salt_size=10
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>change_password</span>(self, password: str) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            self<span style=color:#f92672>.</span>password <span style=color:#f92672>=</span> pbkdf2_sha512<span style=color:#f92672>.</span>encrypt(
+                password, rounds<span style=color:#f92672>=</span><span style=color:#ae81ff>10000</span>, salt_size<span style=color:#f92672>=</span><span style=color:#ae81ff>10</span>
             )
 
-        def verify_password(self, password: str) -&gt; bool:
-            try:
-                valid = pbkdf2_sha512.verify(password, self.password)
-            except ValueError:
-                valid = False
-            return valid
-</code></pre><h4 id=service>Service</h4><p>Service - объект, содержащий в себе всю бизнес-логику, относящуюся к конкретной бизнес-сущности. Например, создание сущностей, различные валидации и прочие правила бизнес-логики. Данные объекты также ничего не знают о том как данные хранятся в БД, а только имеют доступ к интерфейсу, через который могут их получить или изменить.</p><pre><code>    from logging import Logger
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>verify_password</span>(self, password: str) <span style=color:#f92672>-&gt;</span> bool:
+            <span style=color:#66d9ef>try</span>:
+                valid <span style=color:#f92672>=</span> pbkdf2_sha512<span style=color:#f92672>.</span>verify(password, self<span style=color:#f92672>.</span>password)
+            <span style=color:#66d9ef>except</span> <span style=color:#a6e22e>ValueError</span>:
+                valid <span style=color:#f92672>=</span> <span style=color:#66d9ef>False</span>
+            <span style=color:#66d9ef>return</span> valid</code></pre></div><h4 id=service>Service</h4><p>Service - объект, содержащий в себе всю бизнес-логику, относящуюся к конкретной бизнес-сущности. Например, создание сущностей, различные валидации и прочие правила бизнес-логики. Данные объекты также ничего не знают о том как данные хранятся в БД, а только имеют доступ к интерфейсу, через который могут их получить или изменить.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python3 data-lang=python3>    <span style=color:#f92672>from</span> logging <span style=color:#66d9ef>import</span> Logger
 
-    from aiohttp_micro.exceptions import EntityAlreadyExist
+    <span style=color:#f92672>from</span> aiohttp_micro.exceptions <span style=color:#66d9ef>import</span> EntityAlreadyExist
 
-    from passport.domain import User
-    from passport.domain.storage import Storage  # Интерфейс хранилища
-    from passport.exceptions import Forbidden
+    <span style=color:#f92672>from</span> passport.domain <span style=color:#66d9ef>import</span> User
+    <span style=color:#f92672>from</span> passport.domain.storage <span style=color:#66d9ef>import</span> Storage  <span style=color:#75715e># Интерфейс хранилища</span>
+    <span style=color:#f92672>from</span> passport.exceptions <span style=color:#66d9ef>import</span> Forbidden
 
 
-    class UserService:
-      &quot;&quot;&quot;Сервис для работы с пользователем. Реализует основные правила бизнес-логики.&quot;&quot;&quot;
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>UserService</span>:
+      <span style=color:#e6db74>&#34;&#34;&#34;Сервис для работы с пользователем. Реализует основные правила бизнес-логики.&#34;&#34;&#34;</span>
 
-      def __init__(self, storage: Storage, logger: Logger) -&gt; None:
-          self.storage = storage
-          self.logger = logger
+      <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>__init__</span>(self, storage: Storage, logger: Logger) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+          self<span style=color:#f92672>.</span>storage <span style=color:#f92672>=</span> storage
+          self<span style=color:#f92672>.</span>logger <span style=color:#f92672>=</span> logger
 
-      async def register(self, email: str, password: str) -&gt; User:
-          &quot;&quot;&quot;Регистрация нового пользователя.
+      <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>register</span>(self, email: str, password: str) <span style=color:#f92672>-&gt;</span> User:
+          <span style=color:#e6db74>&#34;&#34;&#34;Регистрация нового пользователя.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Args:
+</span><span style=color:#e6db74>            - email: Email нового пользователя
+</span><span style=color:#e6db74>            - password: Пароль пользователя
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Raises:
+</span><span style=color:#e6db74>            - EntityAlreadyExist: Пользователь с таким еmail уже существует
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Return: Возвращает готовый объект пользователя
+</span><span style=color:#e6db74>          &#34;&#34;&#34;</span>
 
-          Args:
-            - email: Email нового пользователя
-            - password: Пароль пользователя
+          exist <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>storage<span style=color:#f92672>.</span>users<span style=color:#f92672>.</span>exists(email)
 
-          Raises:
-            - EntityAlreadyExist: Пользователь с таким еmail уже существует
+          <span style=color:#66d9ef>if</span> exist:
+              <span style=color:#66d9ef>raise</span> EntityAlreadyExist()
 
-          Return: Возвращает готовый объект пользователя
-          &quot;&quot;&quot;
-
-          exist = await self.storage.users.exists(email)
-
-          if exist:
-              raise EntityAlreadyExist()
-
-          user = User(
-              key=0, email=email, password=&quot;&quot;, is_superuser=False, permissions=[]
+          user <span style=color:#f92672>=</span> User(
+              key<span style=color:#f92672>=</span><span style=color:#ae81ff>0</span>, email<span style=color:#f92672>=</span>email, password<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;&#34;</span>, is_superuser<span style=color:#f92672>=</span><span style=color:#66d9ef>False</span>, permissions<span style=color:#f92672>=</span>[]
           )
-          user.set_password(password)
+          user<span style=color:#f92672>.</span>set_password(password)
 
-          await self.storage.users.add(user)
+          <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>storage<span style=color:#f92672>.</span>users<span style=color:#f92672>.</span>add(user)
 
-          self.logger.info('Successfully register user', email=email)
+          self<span style=color:#f92672>.</span>logger<span style=color:#f92672>.</span>info(<span style=color:#e6db74>&#39;Successfully register user&#39;</span>, email<span style=color:#f92672>=</span>email)
 
-          return user
+          <span style=color:#66d9ef>return</span> user
 
-      async def login(self, email: str, password: str) -&gt; User:
-          &quot;&quot;&quot;Проверка при логине что пользователь существует и ввел правильный пароль.
+      <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>login</span>(self, email: str, password: str) <span style=color:#f92672>-&gt;</span> User:
+          <span style=color:#e6db74>&#34;&#34;&#34;Проверка при логине что пользователь существует и ввел правильный пароль.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Args:
+</span><span style=color:#e6db74>            - email: электронная почта пользователя
+</span><span style=color:#e6db74>            - password: пароль пользователя
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Raises:
+</span><span style=color:#e6db74>            - Forbidden: Пользователь ввел не правильный пароль, доступ запрещен.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Return: Объект авторизованного пользователя
+</span><span style=color:#e6db74>          &#34;&#34;&#34;</span>
 
-          Args:
-            - email: электронная почта пользователя
-            - password: пароль пользователя
+          user <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>storage<span style=color:#f92672>.</span>users<span style=color:#f92672>.</span>fetch_by_email(email)
 
-          Raises:
-            - Forbidden: Пользователь ввел не правильный пароль, доступ запрещен.
+          is_valid <span style=color:#f92672>=</span> user<span style=color:#f92672>.</span>verify_password(password)
+          <span style=color:#66d9ef>if</span> <span style=color:#f92672>not</span> is_valid:
+              <span style=color:#66d9ef>raise</span> Forbidden()
 
-          Return: Объект авторизованного пользователя
-          &quot;&quot;&quot;
+          <span style=color:#66d9ef>return</span> user
 
-          user = await self.storage.users.fetch_by_email(email)
+      <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch</span>(self, key: int) <span style=color:#f92672>-&gt;</span> User:
+          <span style=color:#e6db74>&#34;&#34;&#34; Получение объекта пользователя из хранилища.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Args:
+</span><span style=color:#e6db74>            - key: идентификатор пользователя.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>          Return: Объект пользователя.
+</span><span style=color:#e6db74>          &#34;&#34;&#34;</span>
 
-          is_valid = user.verify_password(password)
-          if not is_valid:
-              raise Forbidden()
+          <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>storage<span style=color:#f92672>.</span>users<span style=color:#f92672>.</span>fetch_by_key(key)</code></pre></div><p>Как видно из примера, объект описывает все необходимые бизнес-правила. Все зависимости он получает из вне и поэтому может быть легко покрыт unit-тестами, которые не требуют подключения к базе данных и будут выполняться быстро и независимо друг от друга.</p><h4 id=use-case>Use Case</h4><p>Use case - объект содержащий описание сложных бизнес-сценариев, требующих взаимодействия нескольких сервисов. Например, регистрацией пользователя занимается сервис UserService, а отправкой уведомления об этом на почту будет заниматься MailService.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python3 data-lang=python3>    <span style=color:#f92672>from</span> logging <span style=color:#66d9ef>import</span> Logger
 
-          return user
+    <span style=color:#f92672>from</span> passport.domain <span style=color:#66d9ef>import</span> User
+    <span style=color:#f92672>from</span> passport.domain.storage <span style=color:#66d9ef>import</span> Storage  <span style=color:#75715e># Интерфейс хранилища</span>
+    <span style=color:#f92672>from</span> passport.services.users <span style=color:#66d9ef>import</span> UserService
 
-      async def fetch(self, key: int) -&gt; User:
-          &quot;&quot;&quot; Получение объекта пользователя из хранилища.
-
-          Args:
-            - key: идентификатор пользователя.
-
-          Return: Объект пользователя.
-          &quot;&quot;&quot;
-
-          return await self.storage.users.fetch_by_key(key)
-</code></pre><p>Как видно из примера, объект описывает все необходимые бизнес-правила. Все зависимости он получает из вне и поэтому может быть легко покрыт unit-тестами, которые не требуют подключения к базе данных и будут выполняться быстро и независимо друг от друга.</p><h4 id=use-case>Use Case</h4><p>Use case - объект содержащий описание сложных бизнес-сценариев, требующих взаимодействия нескольких сервисов. Например, регистрацией пользователя занимается сервис UserService, а отправкой уведомления об этом на почту будет заниматься MailService.</p><pre><code>    from logging import Logger
-
-    from passport.domain import User
-    from passport.domain.storage import Storage  # Интерфейс хранилища
-    from passport.services.users import UserService
-
-    class UseCase:
-        &quot;&quot;&quot;Базовый класс для всех сценариев.&quot;&quot;&quot;
-        def __init__(self, storage: Storage, logger: Logger) -&gt; None:
-            self.storage = storage
-            self.logger = logger
-
-
-    class MailService:
-        &quot;&quot;&quot; Сервис отправки уведомлений по почте. &quot;&quot;&quot;
-
-        def __init__(self, gateway: MailGateway, logger: Logger) -&gt; None:
-          self.gateway = gateway
-          self.logger = logger
-
-        async def send_registration_email(self, user: User) -&gt; None:
-            ...
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>UseCase</span>:
+        <span style=color:#e6db74>&#34;&#34;&#34;Базовый класс для всех сценариев.&#34;&#34;&#34;</span>
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>__init__</span>(self, storage: Storage, logger: Logger) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            self<span style=color:#f92672>.</span>storage <span style=color:#f92672>=</span> storage
+            self<span style=color:#f92672>.</span>logger <span style=color:#f92672>=</span> logger
 
 
-    class RegisterUserUseCase(UseCase):
-        &quot;&quot;&quot;Сценарий регистрации пользователя.&quot;&quot;&quot;
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MailService</span>:
+        <span style=color:#e6db74>&#34;&#34;&#34; Сервис отправки уведомлений по почте. &#34;&#34;&#34;</span>
 
-        def __init__(self, storage: Storage, mail_gateway: MailGateway, logger: Logger) -&gt; None:
-            super().__init__(storage, logger)
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>__init__</span>(self, gateway: MailGateway, logger: Logger) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+          self<span style=color:#f92672>.</span>gateway <span style=color:#f92672>=</span> gateway
+          self<span style=color:#f92672>.</span>logger <span style=color:#f92672>=</span> logger
 
-            self.user_service = UserService(storage, logger)
-            self.mail_service = MailService(mail_gateway, logger)
-
-        async def execute(self, email: str, password: str) -&gt; User:
-            &quot;&quot;&quot;Регистрация пользователя. В случае успеха отправим письмо на почту.
-
-            Args:
-              - email: электронная почта нового пользователя.
-              - password: пароль нового пользователя.
-
-            Return: Готовый объект зарегистрированного пользователя.
-            &quot;&quot;&quot;
-
-            user = await self.user_service.register(email, password)
-
-            await self.mail_service.send_registration_email(user=user)
-
-            return user
-</code></pre><p>Use case-объекты также ничего не знают о конкретной реализации ни хранилища, ни того каким образом отправляются уведомления. Логика тут довольно простая и так же может быть легко покрыта unit-тестами.</p><h3 id=слой-доступа-к-данным>Слой доступа к данным</h3><p>Данный слой содержит в себе всю логику того как нам хранить и модифицировать наши данные. Здесь будет находиться описание структуры моделей в случае использования ORM вроде SQLAlchemy или просто таблиц в случае использования <a href=https://github.com/encode/databases>databases</a> для асинхронного подхода. Вся логика доступа к моделям и таблицам находится в объектах, реализующих интерфейс Repository из слоя бизнес-логики.</p><h4 id=repository>Repository</h4><p>Repository - объект, содержащий всю логику по доступу и модификации конкретных моделей.</p><p>Пример интерфейса репозитория для работы с пользователями:</p><pre><code>    # src/passport/domain/storage/users.py
-
-    from typing import Protocol
-
-    from passport.domain import Permission, User
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>send_registration_email</span>(self, user: User) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            <span style=color:#f92672>...</span>
 
 
-    class UsersRepo(Protocol):
-        &quot;&quot;&quot;Базовый протокол для описания операций получения и модификации бизнес-сущности пользователя.&quot;&quot;&quot;
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>RegisterUserUseCase</span>(UseCase):
+        <span style=color:#e6db74>&#34;&#34;&#34;Сценарий регистрации пользователя.&#34;&#34;&#34;</span>
 
-        async def fetch_by_key(self, key: int) -&gt; User:
-            ...
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>__init__</span>(self, storage: Storage, mail_gateway: MailGateway, logger: Logger) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            super()<span style=color:#f92672>.</span>__init__(storage, logger)
 
-        async def fetch_by_email(self, email: str) -&gt; User:
-            ...
+            self<span style=color:#f92672>.</span>user_service <span style=color:#f92672>=</span> UserService(storage, logger)
+            self<span style=color:#f92672>.</span>mail_service <span style=color:#f92672>=</span> MailService(mail_gateway, logger)
 
-        async def exists(self, email: str) -&gt; bool:
-            ...
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>execute</span>(self, email: str, password: str) <span style=color:#f92672>-&gt;</span> User:
+            <span style=color:#e6db74>&#34;&#34;&#34;Регистрация пользователя. В случае успеха отправим письмо на почту.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>            Args:
+</span><span style=color:#e6db74>              - email: электронная почта нового пользователя.
+</span><span style=color:#e6db74>              - password: пароль нового пользователя.
+</span><span style=color:#e6db74>
+</span><span style=color:#e6db74>            Return: Готовый объект зарегистрированного пользователя.
+</span><span style=color:#e6db74>            &#34;&#34;&#34;</span>
 
-        async def add(self, user: User) -&gt; None:
-            ...
+            user <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>user_service<span style=color:#f92672>.</span>register(email, password)
 
-        async def add_permission(self, user: User, permission: Permission) -&gt; None:
-            ...
+            <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>mail_service<span style=color:#f92672>.</span>send_registration_email(user<span style=color:#f92672>=</span>user)
 
-        async def remove_permission(
+            <span style=color:#66d9ef>return</span> user</code></pre></div><p>Use case-объекты также ничего не знают о конкретной реализации ни хранилища, ни того каким образом отправляются уведомления. Логика тут довольно простая и так же может быть легко покрыта unit-тестами.</p><h3 id=слой-доступа-к-данным>Слой доступа к данным</h3><p>Данный слой содержит в себе всю логику того как нам хранить и модифицировать наши данные. Здесь будет находиться описание структуры моделей в случае использования ORM вроде SQLAlchemy или просто таблиц в случае использования <a href=https://github.com/encode/databases>databases</a> для асинхронного подхода. Вся логика доступа к моделям и таблицам находится в объектах, реализующих интерфейс Repository из слоя бизнес-логики.</p><h4 id=repository>Repository</h4><p>Repository - объект, содержащий всю логику по доступу и модификации конкретных моделей.</p><p>Пример интерфейса репозитория для работы с пользователями:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python3 data-lang=python3>    <span style=color:#75715e># src/passport/domain/storage/users.py</span>
+
+    <span style=color:#f92672>from</span> typing <span style=color:#66d9ef>import</span> Protocol
+
+    <span style=color:#f92672>from</span> passport.domain <span style=color:#66d9ef>import</span> Permission, User
+
+
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>UsersRepo</span>(Protocol):
+        <span style=color:#e6db74>&#34;&#34;&#34;Базовый протокол для описания операций получения и модификации бизнес-сущности пользователя.&#34;&#34;&#34;</span>
+
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch_by_key</span>(self, key: int) <span style=color:#f92672>-&gt;</span> User:
+            <span style=color:#f92672>...</span>
+
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch_by_email</span>(self, email: str) <span style=color:#f92672>-&gt;</span> User:
+            <span style=color:#f92672>...</span>
+
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>exists</span>(self, email: str) <span style=color:#f92672>-&gt;</span> bool:
+            <span style=color:#f92672>...</span>
+
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>add</span>(self, user: User) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            <span style=color:#f92672>...</span>
+
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>add_permission</span>(self, user: User, permission: Permission) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            <span style=color:#f92672>...</span>
+
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>remove_permission</span>(
             self, user: User, permission: Permission
-        ) -&gt; None:
-            ...
+        ) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            <span style=color:#f92672>...</span>
 
-        async def save_user(self, email: str, password: str) -&gt; int:
-            ...
-</code></pre><p>Пример конкретной реализации интерфейса для работы с пользователями, полный листинг <a href=https://github.com/clayman-micro/passport/blob/master/src/passport/storage/users.py>тут</a>:</p><pre><code>    from datetime import datetime
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>save_user</span>(self, email: str, password: str) <span style=color:#f92672>-&gt;</span> int:
+            <span style=color:#f92672>...</span></code></pre></div><p>Пример конкретной реализации интерфейса для работы с пользователями, полный листинг <a href=https://github.com/clayman-micro/passport/blob/master/src/passport/storage/users.py>тут</a>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python3 data-lang=python3>    <span style=color:#f92672>from</span> datetime <span style=color:#66d9ef>import</span> datetime
 
-    import sqlalchemy  # type: ignore
-    from aiohttp_micro.exceptions import EntityNotFound  # type: ignore
-    from aiohttp_storage.storage import metadata  # type: ignore
-    from databases import Database
-    from sqlalchemy import func
-    from sqlalchemy.orm.query import Query  # type: ignore
+    <span style=color:#f92672>import</span> sqlalchemy  <span style=color:#75715e># type: ignore</span>
+    <span style=color:#f92672>from</span> aiohttp_micro.exceptions <span style=color:#66d9ef>import</span> EntityNotFound  <span style=color:#75715e># type: ignore</span>
+    <span style=color:#f92672>from</span> aiohttp_storage.storage <span style=color:#66d9ef>import</span> metadata  <span style=color:#75715e># type: ignore</span>
+    <span style=color:#f92672>from</span> databases <span style=color:#66d9ef>import</span> Database
+    <span style=color:#f92672>from</span> sqlalchemy <span style=color:#66d9ef>import</span> func
+    <span style=color:#f92672>from</span> sqlalchemy.orm.query <span style=color:#66d9ef>import</span> Query  <span style=color:#75715e># type: ignore</span>
 
-    from passport.domain import Permission, User
-    from passport.domain.storage.users import UsersRepo
+    <span style=color:#f92672>from</span> passport.domain <span style=color:#66d9ef>import</span> Permission, User
+    <span style=color:#f92672>from</span> passport.domain.storage.users <span style=color:#66d9ef>import</span> UsersRepo
 
 
-    users = sqlalchemy.Table(
-        &quot;users&quot;,
+    users <span style=color:#f92672>=</span> sqlalchemy<span style=color:#f92672>.</span>Table(
+        <span style=color:#e6db74>&#34;users&#34;</span>,
         metadata,
-        sqlalchemy.Column(&quot;id&quot;, sqlalchemy.Integer, primary_key=True),
-        sqlalchemy.Column(
-            &quot;email&quot;, sqlalchemy.String(255), nullable=False, unique=True
+        sqlalchemy<span style=color:#f92672>.</span>Column(<span style=color:#e6db74>&#34;id&#34;</span>, sqlalchemy<span style=color:#f92672>.</span>Integer, primary_key<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>),
+        sqlalchemy<span style=color:#f92672>.</span>Column(
+            <span style=color:#e6db74>&#34;email&#34;</span>, sqlalchemy<span style=color:#f92672>.</span>String(<span style=color:#ae81ff>255</span>), nullable<span style=color:#f92672>=</span><span style=color:#66d9ef>False</span>, unique<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>
         ),
-        sqlalchemy.Column(&quot;password&quot;, sqlalchemy.String(255), nullable=False),
-        sqlalchemy.Column(&quot;is_active&quot;, sqlalchemy.Boolean, default=True),
-        sqlalchemy.Column(&quot;is_superuser&quot;, sqlalchemy.Boolean, default=False),
-        sqlalchemy.Column(
-            &quot;last_login&quot;, sqlalchemy.DateTime, default=datetime.utcnow
+        sqlalchemy<span style=color:#f92672>.</span>Column(<span style=color:#e6db74>&#34;password&#34;</span>, sqlalchemy<span style=color:#f92672>.</span>String(<span style=color:#ae81ff>255</span>), nullable<span style=color:#f92672>=</span><span style=color:#66d9ef>False</span>),
+        sqlalchemy<span style=color:#f92672>.</span>Column(<span style=color:#e6db74>&#34;is_active&#34;</span>, sqlalchemy<span style=color:#f92672>.</span>Boolean, default<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>),
+        sqlalchemy<span style=color:#f92672>.</span>Column(<span style=color:#e6db74>&#34;is_superuser&#34;</span>, sqlalchemy<span style=color:#f92672>.</span>Boolean, default<span style=color:#f92672>=</span><span style=color:#66d9ef>False</span>),
+        sqlalchemy<span style=color:#f92672>.</span>Column(
+            <span style=color:#e6db74>&#34;last_login&#34;</span>, sqlalchemy<span style=color:#f92672>.</span>DateTime, default<span style=color:#f92672>=</span>datetime<span style=color:#f92672>.</span>utcnow
         ),
-        sqlalchemy.Column(
-            &quot;created_on&quot;, sqlalchemy.DateTime, default=datetime.utcnow
+        sqlalchemy<span style=color:#f92672>.</span>Column(
+            <span style=color:#e6db74>&#34;created_on&#34;</span>, sqlalchemy<span style=color:#f92672>.</span>DateTime, default<span style=color:#f92672>=</span>datetime<span style=color:#f92672>.</span>utcnow
         ),
     )
 
-    class UsersDBRepo(UsersRepo):
-        def __init__(self, database: Database) -&gt; None:
-            self._database = database
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>UsersDBRepo</span>(UsersRepo):
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>__init__</span>(self, database: Database) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            self<span style=color:#f92672>.</span>_database <span style=color:#f92672>=</span> database
 
-        def get_query(self) -&gt; Query:
-            return sqlalchemy.select(
-                [users.c.id, users.c.email, users.c.password]
-            ).where(
-                users.c.is_active == True  # noqa: E712
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>get_query</span>(self) <span style=color:#f92672>-&gt;</span> Query:
+            <span style=color:#66d9ef>return</span> sqlalchemy<span style=color:#f92672>.</span>select(
+                [users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>id, users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>email, users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>password]
+            )<span style=color:#f92672>.</span>where(
+                users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>is_active <span style=color:#f92672>==</span> <span style=color:#66d9ef>True</span>  <span style=color:#75715e># noqa: E712</span>
             )
 
-        def _process_row(self, row) -&gt; User:
-            return User(
-                key=row[&quot;id&quot;], email=row[&quot;email&quot;], password=row[&quot;password&quot;]
-            )  # type: ignore
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>_process_row</span>(self, row) <span style=color:#f92672>-&gt;</span> User:
+            <span style=color:#66d9ef>return</span> User(
+                key<span style=color:#f92672>=</span>row[<span style=color:#e6db74>&#34;id&#34;</span>], email<span style=color:#f92672>=</span>row[<span style=color:#e6db74>&#34;email&#34;</span>], password<span style=color:#f92672>=</span>row[<span style=color:#e6db74>&#34;password&#34;</span>]
+            )  <span style=color:#75715e># type: ignore</span>
 
-        async def fetch_by_key(self, key: int) -&gt; User:
-            query = self.get_query().where(users.c.id == key)
-            row = await self._database.fetch_one(query)
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch_by_key</span>(self, key: int) <span style=color:#f92672>-&gt;</span> User:
+            query <span style=color:#f92672>=</span> self<span style=color:#f92672>.</span>get_query()<span style=color:#f92672>.</span>where(users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>id <span style=color:#f92672>==</span> key)
+            row <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>_database<span style=color:#f92672>.</span>fetch_one(query)
 
-            if not row:
-                raise EntityNotFound()
+            <span style=color:#66d9ef>if</span> <span style=color:#f92672>not</span> row:
+                <span style=color:#66d9ef>raise</span> EntityNotFound()
 
-            return self._process_row(row)
+            <span style=color:#66d9ef>return</span> self<span style=color:#f92672>.</span>_process_row(row)
 
-        async def fetch_by_email(self, email: str) -&gt; User:
-            query = self.get_query().where(users.c.email == email)
-            row = await self._database.fetch_one(query)
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>fetch_by_email</span>(self, email: str) <span style=color:#f92672>-&gt;</span> User:
+            query <span style=color:#f92672>=</span> self<span style=color:#f92672>.</span>get_query()<span style=color:#f92672>.</span>where(users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>email <span style=color:#f92672>==</span> email)
+            row <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>_database<span style=color:#f92672>.</span>fetch_one(query)
 
-            if not row:
-                raise EntityNotFound()
+            <span style=color:#66d9ef>if</span> <span style=color:#f92672>not</span> row:
+                <span style=color:#66d9ef>raise</span> EntityNotFound()
 
-            return self._process_row(row)
+            <span style=color:#66d9ef>return</span> self<span style=color:#f92672>.</span>_process_row(row)
 
-        async def exists(self, email: str) -&gt; bool:
-            query = sqlalchemy.select([func.count(users.c.id)]).where(
-                users.c.email == email
+        <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>exists</span>(self, email: str) <span style=color:#f92672>-&gt;</span> bool:
+            query <span style=color:#f92672>=</span> sqlalchemy<span style=color:#f92672>.</span>select([func<span style=color:#f92672>.</span>count(users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>id)])<span style=color:#f92672>.</span>where(
+                users<span style=color:#f92672>.</span>c<span style=color:#f92672>.</span>email <span style=color:#f92672>==</span> email
             )
-            count = await self._database.fetch_val(query)
+            count <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> self<span style=color:#f92672>.</span>_database<span style=color:#f92672>.</span>fetch_val(query)
 
-            return count &gt; 0
+            <span style=color:#66d9ef>return</span> count <span style=color:#f92672>&gt;</span> <span style=color:#ae81ff>0</span>
 
-        ...
-</code></pre><p>Данные объекты так же могут быть легко покрыты unit-тестами, использующими как реальную БД, так и Mock-заглушку переданную в виде зависимости.</p><h4 id=storage>Storage</h4><p>Storage - данный объект не обязателен и добавлен для удобства. Описывает все виды репозиториев приложения и позволяет сэкономить на передаче параметров в объекты бизнес логики.</p><pre><code>    # src/passport/domain/storage/__init__.py - интерфейс в бизнес-логике
+        <span style=color:#f92672>...</span></code></pre></div><p>Данные объекты так же могут быть легко покрыты unit-тестами, использующими как реальную БД, так и Mock-заглушку переданную в виде зависимости.</p><h4 id=storage>Storage</h4><p>Storage - данный объект не обязателен и добавлен для удобства. Описывает все виды репозиториев приложения и позволяет сэкономить на передаче параметров в объекты бизнес логики.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python3 data-lang=python3>    <span style=color:#75715e># src/passport/domain/storage/__init__.py - интерфейс в бизнес-логике</span>
 
-    from abc import ABC
+    <span style=color:#f92672>from</span> abc <span style=color:#66d9ef>import</span> ABC
 
-    from passport.domain.storage.sessions import SessionRepo
-    from passport.domain.storage.users import UsersRepo
+    <span style=color:#f92672>from</span> passport.domain.storage.sessions <span style=color:#66d9ef>import</span> SessionRepo
+    <span style=color:#f92672>from</span> passport.domain.storage.users <span style=color:#66d9ef>import</span> UsersRepo
 
 
-    class Storage(ABC):
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Storage</span>(ABC):
         sessions: SessionRepo
         users: UsersRepo
 
 
-    # src/passport/storage/__init__.py - конкретная реализация
+    <span style=color:#75715e># src/passport/storage/__init__.py - конкретная реализация</span>
 
-    from aiohttp_storage.storage import (  # type: ignore
-        DBStorage as AbstractDBStorage,
+    <span style=color:#f92672>from</span> aiohttp_storage.storage <span style=color:#66d9ef>import</span> (  <span style=color:#75715e># type: ignore</span>
+        DBStorage <span style=color:#66d9ef>as</span> AbstractDBStorage,
     )
-    from databases import Database
+    <span style=color:#f92672>from</span> databases <span style=color:#66d9ef>import</span> Database
 
-    from passport.domain.storage import Storage
-    from passport.storage.sessions import SessionDBStorage
-    from passport.storage.users import UsersDBRepo
+    <span style=color:#f92672>from</span> passport.domain.storage <span style=color:#66d9ef>import</span> Storage
+    <span style=color:#f92672>from</span> passport.storage.sessions <span style=color:#66d9ef>import</span> SessionDBStorage
+    <span style=color:#f92672>from</span> passport.storage.users <span style=color:#66d9ef>import</span> UsersDBRepo
 
 
-    class DBStorage(Storage, AbstractDBStorage):
-        def __init__(self, database: Database) -&gt; None:
-            super().__init__(database=database)
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>DBStorage</span>(Storage, AbstractDBStorage):
+        <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>__init__</span>(self, database: Database) <span style=color:#f92672>-&gt;</span> <span style=color:#66d9ef>None</span>:
+            super()<span style=color:#f92672>.</span>__init__(database<span style=color:#f92672>=</span>database)
 
-            self.sessions = SessionDBStorage(database=database)
-            self.users = UsersDBRepo(database=database)
-</code></pre><h3 id=слой-взаимодействия-с-внешними-сервисами>Слой взаимодействия с внешними сервисами</h3><p>По тому же принципу как мы отделяем слой доступа к данным, можно выделить отдельно конкретные реализации объектов, взаимодействующими с другими компонентами системы. Например: отправка уведомлений по email или через Telegram бота, получение данных о счетах и балансе пользователя из микросервиса биллинга, отправка уведомлений пользователю в браузер через сервис push-нотификаций. Объекты реализуют интерфейс Gateway из слоя бизнес-логики.</p><h3 id=внешний-интерфейс-приложения>Внешний интерфейс приложения</h3><p>В данном слое уже находится все что относится ко взаимодействию с нашим приложеним из внешнего мира. Controller/handler из веб-фреймворка, схемы валидации http запросов и сериализации ответов, команды для CLI, задания для Celery. Поскольку вся бизнес логика у нас уже описана в UseCase, тут нам достаточно просто собрать все воедино и запустить выполнение</p><h4 id=handlerscontrollers>Handlers/Controllers</h4><p>Обработчик POST запроса на примере библиотеки <a href=https://docs.aiohttp.org/en/stable/>aiohttp</a></p><pre><code>    from aiohttp import web
-    from aiohttp_micro.exceptions import EntityNotFound  # type: ignore
-    from aiohttp_micro.handlers import (  # type: ignore
+            self<span style=color:#f92672>.</span>sessions <span style=color:#f92672>=</span> SessionDBStorage(database<span style=color:#f92672>=</span>database)
+            self<span style=color:#f92672>.</span>users <span style=color:#f92672>=</span> UsersDBRepo(database<span style=color:#f92672>=</span>database)</code></pre></div><h3 id=слой-взаимодействия-с-внешними-сервисами>Слой взаимодействия с внешними сервисами</h3><p>По тому же принципу как мы отделяем слой доступа к данным, можно выделить отдельно конкретные реализации объектов, взаимодействующими с другими компонентами системы. Например: отправка уведомлений по email или через Telegram бота, получение данных о счетах и балансе пользователя из микросервиса биллинга, отправка уведомлений пользователю в браузер через сервис push-нотификаций. Объекты реализуют интерфейс Gateway из слоя бизнес-логики.</p><h3 id=внешний-интерфейс-приложения>Внешний интерфейс приложения</h3><p>В данном слое уже находится все что относится ко взаимодействию с нашим приложеним из внешнего мира. Controller/handler из веб-фреймворка, схемы валидации http запросов и сериализации ответов, команды для CLI, задания для Celery. Поскольку вся бизнес логика у нас уже описана в UseCase, тут нам достаточно просто собрать все воедино и запустить выполнение</p><h4 id=handlerscontrollers>Handlers/Controllers</h4><p>Обработчик POST запроса на примере библиотеки <a href=https://docs.aiohttp.org/en/stable/>aiohttp</a></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-python3 data-lang=python3>    <span style=color:#f92672>from</span> aiohttp <span style=color:#66d9ef>import</span> web
+    <span style=color:#f92672>from</span> aiohttp_micro.exceptions <span style=color:#66d9ef>import</span> EntityNotFound  <span style=color:#75715e># type: ignore</span>
+    <span style=color:#f92672>from</span> aiohttp_micro.handlers <span style=color:#66d9ef>import</span> (  <span style=color:#75715e># type: ignore</span>
         json_response,
         validate_payload,
     )
-    from marshmallow import fields, Schema
+    <span style=color:#f92672>from</span> marshmallow <span style=color:#66d9ef>import</span> fields, Schema
 
-    from passport.exceptions import Forbidden
-    from passport.handlers import CredentialsPayloadSchema, session_required
-    from passport.storage import DBStorage
-    from passport.use_cases.users import LoginUseCase
-
-
-    class CredentialsPayloadSchema(Schema):
-        email = fields.Str(required=True, description=&quot;User email&quot;)
-        password = fields.Str(required=True, description=&quot;User password&quot;)
+    <span style=color:#f92672>from</span> passport.exceptions <span style=color:#66d9ef>import</span> Forbidden
+    <span style=color:#f92672>from</span> passport.handlers <span style=color:#66d9ef>import</span> CredentialsPayloadSchema, session_required
+    <span style=color:#f92672>from</span> passport.storage <span style=color:#66d9ef>import</span> DBStorage
+    <span style=color:#f92672>from</span> passport.use_cases.users <span style=color:#66d9ef>import</span> LoginUseCase
 
 
-    @validate_payload(CredentialsPayloadSchema)
-    async def login(payload: Dict[str, str], request: web.Request) -&gt; web.Response:
-        use_case = LoginUseCase(app=request.app)
+    <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CredentialsPayloadSchema</span>(Schema):
+        email <span style=color:#f92672>=</span> fields<span style=color:#f92672>.</span>Str(required<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>, description<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;User email&#34;</span>)
+        password <span style=color:#f92672>=</span> fields<span style=color:#f92672>.</span>Str(required<span style=color:#f92672>=</span><span style=color:#66d9ef>True</span>, description<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;User password&#34;</span>)
 
-        try:
-            user = await use_case.execute(payload[&quot;email&quot;], payload[&quot;password&quot;])
-        except Forbidden:
-            raise web.HTTPForbidden()
-        except EntityNotFound:
-            raise web.HTTPNotFound()
 
-        config = request.app[&quot;config&quot;]
+    <span style=color:#a6e22e>@validate_payload</span>(CredentialsPayloadSchema)
+    <span style=color:#66d9ef>async</span> <span style=color:#66d9ef>def</span> <span style=color:#a6e22e>login</span>(payload: Dict[str, str], request: web<span style=color:#f92672>.</span>Request) <span style=color:#f92672>-&gt;</span> web<span style=color:#f92672>.</span>Response:
+        use_case <span style=color:#f92672>=</span> LoginUseCase(app<span style=color:#f92672>=</span>request<span style=color:#f92672>.</span>app)
 
-        session_key = secrets.token_urlsafe(32)
-        expires = datetime.now() + timedelta(days=config.sessions.expire)
+        <span style=color:#66d9ef>try</span>:
+            user <span style=color:#f92672>=</span> <span style=color:#66d9ef>await</span> use_case<span style=color:#f92672>.</span>execute(payload[<span style=color:#e6db74>&#34;email&#34;</span>], payload[<span style=color:#e6db74>&#34;password&#34;</span>])
+        <span style=color:#66d9ef>except</span> Forbidden:
+            <span style=color:#66d9ef>raise</span> web<span style=color:#f92672>.</span>HTTPForbidden()
+        <span style=color:#66d9ef>except</span> EntityNotFound:
+            <span style=color:#66d9ef>raise</span> web<span style=color:#f92672>.</span>HTTPNotFound()
 
-        storage = DBStorage(database=request.app[&quot;db&quot;])
-        await storage.sessions.add(user, session_key, expires)
+        config <span style=color:#f92672>=</span> request<span style=color:#f92672>.</span>app[<span style=color:#e6db74>&#34;config&#34;</span>]
 
-        request.app[&quot;logger&quot;].info(&quot;User logged in&quot;, user=user.email)
+        session_key <span style=color:#f92672>=</span> secrets<span style=color:#f92672>.</span>token_urlsafe(<span style=color:#ae81ff>32</span>)
+        expires <span style=color:#f92672>=</span> datetime<span style=color:#f92672>.</span>now() <span style=color:#f92672>+</span> timedelta(days<span style=color:#f92672>=</span>config<span style=color:#f92672>.</span>sessions<span style=color:#f92672>.</span>expire)
 
-        response = json_response({})
-        response.set_cookie(
-            name=config.sessions.cookie,
-            value=session_key,
-            max_age=config.sessions.expire * 24 * 60 * 60,
-            domain=config.sessions.domain,
-            httponly=&quot;True&quot;,
+        storage <span style=color:#f92672>=</span> DBStorage(database<span style=color:#f92672>=</span>request<span style=color:#f92672>.</span>app[<span style=color:#e6db74>&#34;db&#34;</span>])
+        <span style=color:#66d9ef>await</span> storage<span style=color:#f92672>.</span>sessions<span style=color:#f92672>.</span>add(user, session_key, expires)
+
+        request<span style=color:#f92672>.</span>app[<span style=color:#e6db74>&#34;logger&#34;</span>]<span style=color:#f92672>.</span>info(<span style=color:#e6db74>&#34;User logged in&#34;</span>, user<span style=color:#f92672>=</span>user<span style=color:#f92672>.</span>email)
+
+        response <span style=color:#f92672>=</span> json_response({})
+        response<span style=color:#f92672>.</span>set_cookie(
+            name<span style=color:#f92672>=</span>config<span style=color:#f92672>.</span>sessions<span style=color:#f92672>.</span>cookie,
+            value<span style=color:#f92672>=</span>session_key,
+            max_age<span style=color:#f92672>=</span>config<span style=color:#f92672>.</span>sessions<span style=color:#f92672>.</span>expire <span style=color:#f92672>*</span> <span style=color:#ae81ff>24</span> <span style=color:#f92672>*</span> <span style=color:#ae81ff>60</span> <span style=color:#f92672>*</span> <span style=color:#ae81ff>60</span>,
+            domain<span style=color:#f92672>=</span>config<span style=color:#f92672>.</span>sessions<span style=color:#f92672>.</span>domain,
+            httponly<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;True&#34;</span>,
         )
 
-        return response
-</code></pre><h3 id=заключение>Заключение</h3><p>Таким образом мы получили простую с точки зрения организации и разделения отвественностей архитектуру, которую достаточно просто поддерживать и развивать. Нет проблем с покрытием кода автоматическим unit и интеграционными тестами, которые будут выполняться быстро и не зависимо друг от друга. Вот примеры некоторых сервисов, реализованных с использованием описанного подхода:</p><ul><li><a href=https://github.com/clayman-micro/passport>Passport</a> - простой микросервис регистрации и авторизации пользователей.</li><li><a href=https://github.com/clayman-micro/wallet/tree/release/2.4.0>Wallet</a> - сервис учета и анализа личных доходов и расходов, пока еще находится в стадии разработки)</li></ul><p>Описаный подход не претендует на ультимативность, но ничего лучше пока придумать не удалось 😅.
+        <span style=color:#66d9ef>return</span> response</code></pre></div><h3 id=заключение>Заключение</h3><p>Таким образом мы получили простую с точки зрения организации и разделения отвественностей архитектуру, которую достаточно просто поддерживать и развивать. Нет проблем с покрытием кода автоматическим unit и интеграционными тестами, которые будут выполняться быстро и не зависимо друг от друга. Вот примеры некоторых сервисов, реализованных с использованием описанного подхода:</p><ul><li><a href=https://github.com/clayman-micro/passport>Passport</a> - простой микросервис регистрации и авторизации пользователей.</li><li><a href=https://github.com/clayman-micro/wallet/tree/release/2.4.0>Wallet</a> - сервис учета и анализа личных доходов и расходов, пока еще находится в стадии разработки)</li></ul><p>Описаный подход не претендует на ультимативность, но ничего лучше пока придумать не удалось 😅.
 Спасибо за внимание.</p></div><div class=post-footer></div></article></main></body></html>

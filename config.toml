@@ -2,6 +2,7 @@ baseURL = "https://tech.clayman.pro/"
 languageCode = "en-us"
 title = "Kirill Sumorokov"
 theme = "m10c"
+googleAnalytics = "G-5V8YS0XLFR"
 
 [params]
 author = "Kirill Sumorokov"

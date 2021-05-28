@@ -1,5 +1,5 @@
 ---
-title: "Arcitecture"
+title: "Architecture"
 date: 2021-05-27T19:47:11+05:00
 draft: false
 ---
